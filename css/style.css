@@ -1,0 +1,145 @@
+.w {
+    background-color: blue;
+    height: 0;
+    padding: 1%;
+    margin: 0;
+}
+
+.p {
+    background-color: white;
+    height: 0;
+    padding: 1%;
+    margin: 0;
+}
+
+.radio {
+    margin: 10px 10px;
+}
+
+.mode {
+    margin-top: 30px;
+}
+
+.s {
+    background-color: rgb(255, 229, 81);
+    height: 0;
+    padding: 1%;
+    margin: 0;
+}
+
+.e {
+    background-color: red;
+    height: 0;
+    padding: 1%;
+    margin: 0;
+}
+
+.z {
+    background-color: rgb(0, 0, 0);
+    height: 0;
+    padding: 1%;
+    margin: 0;
+}
+
+.msg {
+    font-size: 24px;
+    color: rgb(255, 83, 52);
+}
+
+#size {
+    height: 20px;
+    width: 200px;
+}
+
+#meiro {
+    margin: 20px;
+    padding: 10px;
+    font-size: 9px;
+}
+
+#btn {
+    margin-left: 30px;
+}
+
+.move {
+    margin-left: 15px;
+}
+
+#btn_auto {
+    margin: 20px;
+    padding: 10px;
+}
+
+#drop_zone {
+    width: 240px;
+    height: 240px;
+    border: 2px dashed #bbb;
+    display: inline-block;
+    border-radius: 5px;
+    margin: 10px;
+    color: #bbb;
+}
+
+#camera_zone {
+    width: 240px;
+    height: 240px;
+    border: 2px dashed #bbb;
+    display: inline-block;
+    border-radius: 5px;
+    margin: 10px;
+    color: #bbb;
+}
+
+#test_canvas {
+    margin: 10px;
+}
+
+#check {
+    margin: 10px;
+}
+
+#drop_image {
+    width: 200px;
+    height: 200px;
+}
+
+#meiro {
+    width: 50%;
+    height: 50%;
+    padding: 0;
+    margin: 0;
+}
+
+.block {
+    display: flex;
+}
+
+canvas {
+    width: 200px;
+}
+
+#meiro {
+    width: 500px;
+    height: 500px;
+}
+
+#new_meiro {
+    width: 650px;
+    height: 650px;
+}
+
+#vr_meiro {
+    width: 650px;
+    height: 650px;
+}
+
+.a_move{
+    font-size: 24px;
+    background-color:skyblue;
+}
+
+.b_move{
+    font-size: 24px;
+    background-color:yellow;
+}
+
