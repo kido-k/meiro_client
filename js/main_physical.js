@@ -11,11 +11,12 @@ const CAMERA_MOVE_UNIT = 5;
 const BORD_ROTE_UNIT = 1;
 const PLAYER_MOVE_UNIT = 5;
 const PLAYER_SPEED = 1;
+const SOCKET_CONNECT = 'https://gentle-dusk-86476.herokuapp.com/';
 
 var image;
 // var player = {};
 var map = [];
-// var size = 0;
+var size = 0;
 var position = {};
 var start = [];
 var end = [];
@@ -29,7 +30,7 @@ var bord_rotation = { x: 360, y: 0, z: 0 }
 
 var player_pass = [];
 var player_num = 0;
-const player_start_position = {  x: -95, y: 15, z: -85  };
+var player_start_position = { x: -95, y: 15, z: -85 };
 var player_size = 3;
 var parts_depth = 5;
 var first_play = true;
@@ -89,6 +90,18 @@ $(function () {
         roteBord(btn);
     });
 
+    $('#create').on('click', function () {
+        size = Number($('#size').val()) + 1;
+        map = makeLoad(size);
+        // console.log(map);
+        var parts_list = createPartsList(map);
+        displaySVG(parts_list);
+        displayAFRAME(parts_list);
+        // displayLoad(size, map, players);
+        createPlayer();
+        showBtn();
+    });
+
     $('html').keyup(function (e) {
         const key = e.which;
         if (key === 37 || key === 38 || key === 39 || key === 40) {
@@ -105,6 +118,22 @@ $(function () {
 
     $('#step').on('click', function () {
         moveAframePlayer();
+    });
+
+    $('.radio').on('click', function (e) {
+        if (e.target.id === 'make_auto') {
+            $('#make_mode').css({ display: 'inline' });
+            $('#load_mode').css({ display: 'none' });
+            $('#camera_mode').css({ display: 'none' });
+        } else if (e.target.id === 'load_meiro') {
+            $('#make_mode').css({ display: 'none' });
+            $('#load_mode').css({ display: 'inline' });
+            $('#camera_mode').css({ display: 'none' });
+        } else if (e.target.id === 'load_camera') {
+            $('#make_mode').css({ display: 'none' });
+            $('#load_mode').css({ display: 'none' });
+            $('#camera_mode').css({ display: 'inline' });
+        }
     });
 
     $('#auto').on('click', function () {
@@ -142,7 +171,7 @@ $(function () {
 });
 
 function connectSocket() {
-    socket = io.connect('http://localhost:8080');
+    socket = io.connect(SOCKET_CONNECT);
     socket.emit('connected', 'board_connected');
     socket.on('connect_return', function (msg) {
         console.log(msg);
@@ -155,12 +184,20 @@ function createPlayer() {
     var x = player_start_position.x;
     var y = player_start_position.y;
     var z = player_start_position.z;
-    player_size = 3;
     var pass_idx = 999;
     var direction = '';
     var distance = 0;
     var root = [];
     // var player = players[0];
+    if (size === 0) {
+        player_size = 3;
+    } else {
+        const ext = Math.floor(CANVAS_SIZE / (Number($('#size').val())) / 2);
+        player_size = ext;
+        x = -100 + ext;
+        z = -100 + ((ext + 2) * 2) - ext;
+        // console.log("ext" + player_size);
+    }
     var player = new Player(id, x, y, player_size, pass_idx, direction, distance, root);
     players.push(player);
     // addSvgRectElement(id, x, y, size, size, 'yellow');
@@ -302,6 +339,90 @@ function addAframeElement(id, x, y, z, radius, color) {
     $('#a_meiro').append(str);
     run();
 }
+
+function makeLoad(size) {
+    if (size <= 10) {
+        alert("10以上を入力してください");
+        return false;
+    }
+    $('#meiro').css({
+        'height': size * 10 + 'px',
+        'width': (size * 10) + 'px'
+    });
+
+    const map = [];
+    for (var i = 0; i < size; i++) {
+        const line = [];
+        for (var n = 0; n < size; n++) {
+            if ((i === 1 && n === 0) || (i === + size - 2 && n === + size - 1)) {
+                line.push(1); //0が道
+            } else if (i === 0 || i === size - 1 || n === 0
+                || n === size - 1 || n % 2 === 0 && i % 2 === 0) {
+                line.push(0); //1が壁
+            } else {
+                line.push(1); //0が道    
+            }
+        }
+        map.push(line);
+    };
+    // console.log(map);
+    // return map;
+
+    //これ以降は棒倒し処理
+    for (var r = 0; r < size; r++) { //rは行数
+        if (r === 0 || (r + 1) === size) {
+            continue;
+        }
+        if (r % 2 === 1) {
+            continue;
+        }
+
+        const line = map[r];
+
+        // 最初の行のみ、上下左右倒してOK（重なるのはNG）
+        var direction = ['top', 'bottom', 'left', 'right'];
+        if (r >= 4) {
+            direction = direction.slice(1); //topを削除
+        }
+        for (var i = 0; i < line.length; i++) { //iは列数
+            // 端っこは対象外
+            if (i === 0 || (i + 1) === line.length || i % 2 === 1) {
+                continue;
+            }
+
+            direction = shuffleList(direction);
+
+            for (var j = 0; j < direction.length; j++) {
+                if (direction[j] === "top") {
+                    if (map[r - 1][i] === 1) {
+                        map[r - 1][i] = 0;
+                        break;
+                    }
+                }
+                if (direction[j] === "left") {
+                    if (map[r][i - 1] === 1) {
+                        map[r][i - 1] = 0;
+                        break;
+                    }
+                }
+                if (direction[j] === "right") {
+                    if (map[r][i + 1] === 1) {
+                        map[r][i + 1] = 0;
+                        break;
+                    }
+                }
+                if (direction[j] === "bottom") {
+                    if (map[r + 1][i] === 1) {
+                        map[r + 1][i] = 0;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    return map;
+}
+
 
 function moveCamera_btn(btn) {
     switch (btn) {
@@ -936,6 +1057,210 @@ function snapshot() {
     console.log(map);
     // displayLoad(size, map, player);
 }
+
+function createPartsList(map) {
+    var x_cnt = 0;
+    // var y_cnt = 0;
+    // var parts = { x: 0, y: 0, width: 1, height: 0, type: '' }
+    const parts_list = [];
+
+    const ext = Math.round(CANVAS_SIZE / (Number($('#size').val()) + 2));
+    // console.log(ext);
+    // console.log(map);
+    for (var y = 0; y < map.length; y++) {
+        const map_x = map[y];
+        for (var x = 0; x < map_x.length; x++) {
+            if (map_x[x] === 1) {
+                const parts = { x: x * ext, y: y * ext, width: ext, height: ext, type: 'pass' }
+                parts_list.push(parts);
+            } else {
+                const parts = { x: x * ext, y: y * ext, width: ext, height: ext, type: 'wall' }
+                parts_list.push(parts);
+            }
+        }
+    }
+
+    console.log(parts_list);
+    //キャラの通り道を作成
+
+    const pass_list = [];
+
+    for (var i = 0; i < parts_list.length; i++) {
+        var parts = parts_list[i];
+        if (parts.type === 'pass') {
+            pass_list.push(parts);
+        }
+    }
+
+    pass_list.sort(function (a, b) {
+        if (a.x < b.x) return -1;
+        if (a.x > b.x) return 1;
+        if (a.y < b.y) return -1;
+        if (a.y > b.y) return 1;
+        return 0;
+    });
+
+    // for (var i = 0; i < pass_list.length - 1; i++) {
+    //     var pass1 = pass_list[i];
+    //     var pass2 = pass_list[i + 1];
+    //     var pass_y_dif = pass2.y - pass1.y;
+    //     var pass_w_dif = Math.abs(pass2.width - pass1.width);
+
+    //     if (pass_y_dif === pass1.height && pass_w_dif <= 2) {
+    //         pass_list[i].height += 1;
+    //         pass_list.splice(i + 1, 1);
+    //         i = i - 1;
+    //     }
+    // }
+
+    // pass_list.sort(function (a, b) {
+    //     if ((a.x + a.width) < (b.x + b.width)) return 1;
+    //     if ((a.x + a.width) > (b.x + b.width)) return -1;
+    //     if (a.y < b.y) return -1;
+    //     if (a.y > b.y) return 1;
+    //     return 0;
+    // });
+
+    // for (var i = 0; i < pass_list.length - 1; i++) {
+    //     var pass1 = pass_list[i];
+    //     var pass2 = pass_list[i + 1];
+    //     var pass1_area = pass1.width * pass1.height;
+    //     var pass_y_dif = pass2.y - pass1.y;
+    //     var pass_h_dif = pass1.height - pass2.height;
+    //     var pass_w_dif = Math.abs(pass1.width - pass2.width);
+    //     if (pass_y_dif === pass1.height && pass_w_dif <= 2) {
+    //         if (pass_w_dif !== 0 && pass1.width >= 0) {
+    //             pass_list[i].width = pass1.width;
+    //         } else {
+    //             pass_list[i].width = pass2.width;
+    //         }
+    //         pass_list[i].height += pass2.height;
+    //         pass_list.splice(i + 1, 1);
+    //         i = i - 1;
+    //     }
+    // if (pass1_area <= CANVAS_SMALL_LIMIT) {
+    //     pass_list.splice(i, 1);
+    //     i = i - 1;
+    // }
+    // }
+
+    // var avg = calcurateAverageThickness(pass_list);
+
+    // for (var i = 0; i < pass_list.length; i++) {
+    //     var pass = pass_list[i];
+    //     if (pass.width > pass.height) {
+    //         pass.y = Math.ceil(pass.y + pass.height / 2);
+    //         pass.height = 1;
+    //     } else {
+    //         pass.x = Math.ceil(pass.x + pass.width / 2);
+    //         pass.width = 1;
+    //         pass.y = Math.ceil(pass.y - (avg / 2));
+    //         pass.height = Math.ceil(pass.height + avg * 1.8);
+    //     }
+    // }
+
+    // pass_list.sort(function (a, b) {
+    //     if (a.x < b.x) return -1;
+    //     if (a.x > b.x) return 1;
+    //     if (a.y < b.y) return -1;
+    //     if (a.y > b.y) return 1;
+    //     return 0;
+    // });
+
+    // for (var i = 0; i < pass_list.length - 1; i++) {
+    //     var pass1 = pass_list[i];
+    //     var pass2 = pass_list[i + 1];
+    //     if (pass1.x === pass2.x && pass1.width === 1 && pass2.width === 1
+    //         && pass1.y <= pass2.y && pass2.y <= (pass1.y + pass1.height)) {
+    //         pass1.height = pass2.y + pass2.height - pass1.y;
+    //         pass_list.splice(i + 1, 1);
+    //         i = i - 1;
+    //     }
+    // }
+
+    // console.log(pass_list);
+
+    // player_pass = pass_list;
+
+    // return pass_list;
+
+    // 壁のみでテスト------------------------------
+    const wall_list = [];
+
+    for (var i = 0; i < parts_list.length; i++) {
+        var parts = parts_list[i];
+        if (parts.type === 'wall') {
+            wall_list.push(parts);
+        }
+    }
+
+    wall_list.sort(function (a, b) {
+        if (a.x < b.x) return -1;
+        if (a.x > b.x) return 1;
+        if (a.y < b.y) return -1;
+        if (a.y > b.y) return 1;
+        return 0;
+    });
+
+    // for (var i = 0; i < wall_list.length - 1; i++) {
+    //     var wall1 = wall_list[i];
+    //     var wall2 = wall_list[i + 1];
+    //     var wall_x_dif = wall1.x - wall2.x;
+    //     var wall_y_dif = wall2.y - wall1.y;
+    //     var wall_w_dif = Math.abs(wall2.width - wall1.width);
+
+    //     if (wall_y_dif === wall1.height && wall_w_dif <= 2) {
+    //         if (wall_w_dif < 0) {
+    //             wall1.width = wall2.width;
+    //         }
+    //         wall_list[i].height += 1;
+    //         wall_list.splice(i + 1, 1);
+    //         i = i - 1;
+    //     }
+    // }
+
+    // wall_list.sort(function (a, b) {
+    //     if ((a.x + a.width) < (b.x + b.width)) return 1;
+    //     if ((a.x + a.width) > (b.x + b.width)) return -1;
+    //     if (a.y < b.y) return -1;
+    //     if (a.y > b.y) return 1;
+    //     return 0;
+    // });
+
+
+    // for (var i = 0; i < wall_list.length - 1; i++) {
+    //     var wall1 = wall_list[i];
+    //     var wall2 = wall_list[i + 1];
+    //     var wall1_area = wall1.width * wall1.height;
+    //     var wall_y_dif = wall2.y - wall1.y;
+    //     var wall_h_dif = wall1.height - wall2.height;
+    //     var wall_w_dif = Math.abs(wall1.width - wall2.width);
+    //     if (wall_y_dif === wall1.height && wall_w_dif <= 2) {
+    //         if (wall_w_dif !== 0 && wall1.width >= 0) {
+    //             wall_list[i].width = wall1.width;
+    //         } else {
+    //             wall_list[i].width = wall2.width;
+    //         }
+    //         wall_list[i].height += wall2.height;
+    //         wall_list.splice(i + 1, 1);
+    //         i = i - 1;
+    //     }
+    //     if (wall1_area <= CANVAS_SMALL_LIMIT) {
+    //         wall_list.splice(i, 1);
+    //         i = i - 1;
+    //     }
+    // }
+
+    // // console.log(wall_list);
+    // for (var i = 0; i < pass_list.length; i++) {
+    //     wall_list.push(pass_list[i]);
+    // }
+    // wall_list.push(parts_list);
+
+    // ------------------------------    
+    return wall_list;
+}
+
 
 
 var downloadCsv = (function () {
