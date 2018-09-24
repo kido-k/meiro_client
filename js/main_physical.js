@@ -14,7 +14,6 @@ const PLAYER_SPEED = 1;
 const SOCKET_CONNECT = 'https://gentle-dusk-86476.herokuapp.com/';
 
 var image;
-// var player = {};
 var map = [];
 var size = 0;
 var position = {};
@@ -35,7 +34,9 @@ var player_size = 3;
 var parts_depth = 5;
 var first_play = true;
 const goal = { x: CANVAS_SIZE * 0.99 }
+
 var socket;
+var alpha = 0, beta = 0, gamma = 0;
 
 $(function () {
     var finish = false;
@@ -86,9 +87,17 @@ $(function () {
     });
 
     socket.on('bord_control', function (btn) {
-        console.log(btn);
         roteBord(btn);
     });
+
+    socket.on('jyro_sensor', function (jyro) {
+        roteBordMobile(btn);
+    });
+
+    // 指定時間ごとに繰り返し実行される setInterval(実行する内容, 間隔[ms]) タイマーを設定
+    var timer = window.setInterval(() => {
+        displayData();      // displayData 関数を実行
+    }, 33); // 33msごとに（1秒間に約30回）
 
     $('#create').on('click', function () {
         size = Number($('#size').val()) + 1;
@@ -496,6 +505,22 @@ function roteBord(btn) {
     }
     $('#a_board').attr('rotation', bord_rotation.x + ' ' + bord_rotation.y + ' ' + bord_rotation.z);
 };
+
+function roteBordMobile(jyro) {
+    alpha = jyro.alpha;  // z軸（表裏）まわりの回転の角度（反時計回りがプラス）
+    beta  = jyro.beta;   // x軸（左右）まわりの回転の角度（引き起こすとプラス）
+    gamma = jyro.gamma;  // y軸（上下）まわりの回転の角度（右に傾けるとプラス）
+    $('#a_board').attr('rotation', bord_rotation.x + ' ' + bord_rotation.y + ' ' + bord_rotation.z);
+};
+
+// データを表示する displayData 関数
+function displayData() {
+    var txt = document.getElementById("txt");   // データを表示するdiv要素の取得
+    txt.innerHTML = "alpha: " + alpha + "<br>"  // x軸の値
+        + "beta:  " + beta + "<br>"  // y軸の値
+        + "gamma: " + gamma;          // z軸の値
+}
+
 
 function setInitial() {
     start = [];
