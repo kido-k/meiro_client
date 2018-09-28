@@ -12,6 +12,7 @@ const BORD_ROTE_UNIT = 1;
 const PLAYER_MOVE_UNIT = 5;
 const PLAYER_SPEED = 1;
 const SOCKET_CONNECT = 'https://gentle-dusk-86476.herokuapp.com/';
+const SYNCHTIME = 300;
 
 var image;
 var map = [];
@@ -25,7 +26,7 @@ var camera_position = { x: 0, y: 150, z: 0 }
 var camera_rotation = { x: -90, y: 0, z: 0 }
 var light_position = { x: 100, y: 300, z: 100 }
 var bord_position = { x: -100, y: 0, z: -100 }
-var bord_rotation = { x: 360, y: 0, z: 0 }
+var bord_rotation = { x: 0, y: 0, z: 0 }
 
 var player_pass = [];
 var player_num = 0;
@@ -36,12 +37,13 @@ var first_play = true;
 const goal = { x: CANVAS_SIZE * 0.99 }
 
 var socket;
-var alpha = 0, beta = 0, gamma = 0;
+var mobile_acc = { x: 0, y: 0, z: 0 };
 
 $(function () {
     var finish = false;
     var auto = false;
     var display = true;
+    var pre_value = { x: 0, y: 0, z: 0 }
 
     connectSocket();
 
@@ -57,6 +59,24 @@ $(function () {
         createMeiro();
         createPlayer();
         $('#show').click();
+        // window.setInterval(() => {
+        //     roteBordMobile();      // displayData 関数を実行
+        // }, SYNCHTIME); // 33msごとに（1秒間に約30回）
+    });
+
+    $('#create').on('click', function () {
+        size = Number($('#size').val()) + 1;
+        map = makeLoad(size);
+        // console.log(map);
+        var parts_list = createPartsList(map);
+        displaySVG(parts_list);
+        displayAFRAME(parts_list);
+        // displayLoad(size, map, players);
+        createPlayer();
+        showBtn();
+        // window.setInterval(() => {
+        //     roteBordMobile();
+        // }, SYNCHTIME);
     });
 
     $('#show').on('click', function () {
@@ -90,25 +110,10 @@ $(function () {
         roteBord(btn);
     });
 
-    socket.on('jyro_sensor', function (jyro) {
-        roteBordMobile(btn);
-    });
-
-    // 指定時間ごとに繰り返し実行される setInterval(実行する内容, 間隔[ms]) タイマーを設定
-    var timer = window.setInterval(() => {
-        displayData();      // displayData 関数を実行
-    }, 33); // 33msごとに（1秒間に約30回）
-
-    $('#create').on('click', function () {
-        size = Number($('#size').val()) + 1;
-        map = makeLoad(size);
-        // console.log(map);
-        var parts_list = createPartsList(map);
-        displaySVG(parts_list);
-        displayAFRAME(parts_list);
-        // displayLoad(size, map, players);
-        createPlayer();
-        showBtn();
+    socket.on('jyro_sensor', function (accel) {
+        // console.log(accel);
+        // roteBordMobile(accel);
+        synchAccel(accel);
     });
 
     $('html').keyup(function (e) {
@@ -132,12 +137,16 @@ $(function () {
     $('.radio').on('click', function (e) {
         if (e.target.id === 'make_auto') {
             $('#make_mode').css({ display: 'inline' });
+            $('#create').css({ display: 'inline' });
             $('#load_mode').css({ display: 'none' });
             $('#camera_mode').css({ display: 'none' });
+            $('#load').css({ display: 'none' });
         } else if (e.target.id === 'load_meiro') {
             $('#make_mode').css({ display: 'none' });
+            $('#load').css({ display: 'inline' });
             $('#load_mode').css({ display: 'inline' });
             $('#camera_mode').css({ display: 'none' });
+            $('#create').css({ display: 'none' });
         } else if (e.target.id === 'load_camera') {
             $('#make_mode').css({ display: 'none' });
             $('#load_mode').css({ display: 'none' });
@@ -338,12 +347,14 @@ function addSvgRectElement(id, x, y, width, height, color) {
 }
 
 function addAframeElement(id, x, y, z, radius, color) {
-    var str = '<a-entity id=a_' + id + ' ';
+    var str = '<a-entity id="ball"> ';
+    str += '<a-entity id="a_player" ';
     str += 'dynamic-body="mass:100000;linearDamping: 0.01;angularDamping: 0.0001;"';
     str += 'geometry="primitive:sphere; radius:' + radius + ';"';
     str += 'material="color:' + color + ';"';
     str += 'position="' + x + ' ' + y + ' ' + z + '"';
     str += '></a-entity>';
+    str += ' </a-entity>';
     str += '<a-obj-model static-body id="dragon" position="0 30 0" src="img/BlueEyes/BlueEyes.obj" mtl="img/BlueEyes/BlueEyes.mtl"></a-obj-model>';
     $('#a_meiro').append(str);
     run();
@@ -503,22 +514,48 @@ function roteBord(btn) {
         default:
             console.log('error btn= ' + btn);
     }
+    // const pos = $('#a_player0').attr('position');
+    // $('#a_player0').attr('position', pos.x + ' ' + (pos.y + 10) + ' ' + pos.z);
     $('#a_board').attr('rotation', bord_rotation.x + ' ' + bord_rotation.y + ' ' + bord_rotation.z);
 };
 
-function roteBordMobile(jyro) {
-    alpha = jyro.alpha;  // z軸（表裏）まわりの回転の角度（反時計回りがプラス）
-    beta  = jyro.beta;   // x軸（左右）まわりの回転の角度（引き起こすとプラス）
-    gamma = jyro.gamma;  // y軸（上下）まわりの回転の角度（右に傾けるとプラス）
-    $('#a_board').attr('rotation', bord_rotation.x + ' ' + bord_rotation.y + ' ' + bord_rotation.z);
+function synchAccel(accel) {
+    // mobile_acc = accel;
+    roteBordMobile(accel);
+}
+
+
+// function roteBordMobile() {
+//     // console.log('alpha:' + accel.z + ' beta:' + accel.x + ' gamma:' + accel.y);
+//     displayData(mobile_acc);
+//     if (mobile_acc.x < 300 && mobile_acc.y < 300) {
+//         if (bord_rotation.x <= mobile_acc.x && bord_rotation.z <= mobile_acc.y) {
+//             $('#a_board').attr('rotation', (bord_rotation.x + BORD_ROTE_UNIT) + ' ' + bord_rotation.y + ' ' + (bord_rotation.z + PLAYER_MOVE_UNIT));
+//         } else if (bord_rotation.x > mobile_acc.x && bord_rotation.z < mobile_acc.y) {
+//             $('#a_board').attr('rotation', (bord_rotation.x - BORD_ROTE_UNIT) + ' ' + bord_rotation.y + ' ' + (bord_rotation.z + PLAYER_MOVE_UNIT));
+//         } else if (bord_rotation.x < mobile_acc.x && bord_rotation.z > mobile_acc.y) {
+//             $('#a_board').attr('rotation', (bord_rotation.x + BORD_ROTE_UNIT) + ' ' + bord_rotation.y - ' ' + (bord_rotation.z + PLAYER_MOVE_UNIT));
+//         } else {
+//             $('#a_board').attr('rotation', (bord_rotation.x - BORD_ROTE_UNIT) + ' ' + bord_rotation.y - ' ' + (bord_rotation.z + PLAYER_MOVE_UNIT));
+//         }
+//     }
+// };
+
+function roteBordMobile(accel) {
+    // console.log('alpha:' + accel.z + ' beta:' + accel.x + ' gamma:' + accel.y);
+    displayData(accel);
+    if (accel.x < 70 && accel.x > -70 && accel.y < 70 && accel.y > -70) {
+        $('#a_board').attr('rotation', accel.x * 0.4 + ' ' + 0 + ' ' + -accel.y * 0.4);
+    }
 };
+
 
 // データを表示する displayData 関数
-function displayData() {
+function displayData(accel) {
     var txt = document.getElementById("txt");   // データを表示するdiv要素の取得
-    txt.innerHTML = "alpha: " + alpha + "<br>"  // x軸の値
-        + "beta:  " + beta + "<br>"  // y軸の値
-        + "gamma: " + gamma;          // z軸の値
+    txt.innerHTML = "alpha: " + Math.floor(accel.z) + "<br>"  // x軸の値
+        + "beta:  " + Math.floor(accel.x) + "<br>"  // y軸の値
+        + "gamma: " + Math.floor(accel.y);          // z軸の値
 }
 
 
@@ -971,7 +1008,7 @@ function displaySVG(parts_list) {
 function displayAFRAME(parts_list) {
     $('#vr_meiro').empty();
     var str = "";
-    str += '<a-scene id="a_meiro" embedded physics="debug: true;friction: 0.1;gravity:-19.6; restitution: 0.01">';
+    str += '<a-scene id="a_meiro" embedded physics="debug: true;friction: 0.1;gravity:-19.62; restitution: 0.01; iterations:5">';
     str += '<a-entity light="color: #FFF; intensity: 1.5" position="' + light_position.x + ' ' + light_position.y + ' ' + light_position.z + '"></a-entity>';
     str += '<a-entity id="a_camera" position="' + camera_position.x + ' ' + camera_position.y + ' ' + camera_position.z + '" rotation="' + camera_rotation.x + ' ' + camera_rotation.y + ' ' + camera_rotation.z + '">';
     str += '<a-camera><a-cursor></a-cursor></a-camera>';
@@ -981,7 +1018,7 @@ function displayAFRAME(parts_list) {
     str += '<a-sky color="#DDDDDD"></a-sky>';
     str += '<a-entity id="a_board" position="' + bord_position.x + ' ' + bord_position.y + ' ' + bord_position.z + ' ' + '" rotation="' + bord_rotation.x + ' ' + bord_rotation.y + ' ' + bord_rotation.z + '">';
     // str += '<a-box static-body width= ' + CANVAS_SIZE + ' height= ' + CANVAS_SIZE + ' depth= 1' + ' position="' + (CANVAS_SIZE / 2) + ' ' + (CANVAS_SIZE / 2) * -1 +  ' ' + '-0.5' + ' color="white" transparent="true" opacity=1></a-box>';
-    str += '<a-box static-body width= ' + CANVAS_SIZE + ' height=10 ' + 'depth=' + CANVAS_SIZE + ' position="' + (CANVAS_SIZE / 2) + ' -5 ' + (CANVAS_SIZE / 2) + ' color="white" ></a-box>';
+    str += '<a-box static-body width= ' + CANVAS_SIZE + ' height=50 ' + 'depth=' + CANVAS_SIZE + ' position="' + (CANVAS_SIZE / 2) + ' -25 ' + (CANVAS_SIZE / 2) + ' color="white" ></a-box>';
     for (var i = 0; i < parts_list.length; i++) {
         var parts = parts_list[i];
         if (parts.type === 'wall') {

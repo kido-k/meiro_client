@@ -1,0 +1,29 @@
+<html>
+
+<head>
+  <script src="https://aframe.io/releases/0.8.2/aframe.min.js"></script>
+</head>
+
+<body>
+  <a-scene>
+    <a-entity transparent="true">
+      <a-obj-model id="dragon" position="20 -30 -60" src="img/BlueEyes/BlueEyes.obj" mtl="img/BlueEyes/BlueEyes.mtl"
+        transparent="true"></a-obj-model>
+      <a-sky color="#ECECEC"></a-sky>
+    </a-entity>
+  </a-scene>
+  <script>
+
+      function run(){
+        if(document.getElementById("dragon").object3D.children[0]){
+        document.getElementById("dragon").object3D.children[0].children[0].material[1].transparent = true;
+        } else{
+          setTimeout(run, 500);
+        }
+      }
+      run();
+      
+</script>
+</body>
+
+</html>
