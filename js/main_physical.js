@@ -1014,16 +1014,16 @@ function displayAFRAME(parts_list) {
     str += '<a-camera><a-cursor></a-cursor></a-camera>';
     str += '</a-entity>';
     str += '<a-entity id="a_board" rotation="' + bord_rotation.x + ' ' + bord_rotation.y + ' ' + bord_rotation.z + '">';
-    // str += '<a-entity id="a_all">';
     str += '<a-sky color="#DDDDDD"></a-sky>';
     str += '<a-entity id="a_board" position="' + bord_position.x + ' ' + bord_position.y + ' ' + bord_position.z + ' ' + '" rotation="' + bord_rotation.x + ' ' + bord_rotation.y + ' ' + bord_rotation.z + '">';
-    // str += '<a-box static-body width= ' + CANVAS_SIZE + ' height= ' + CANVAS_SIZE + ' depth= 1' + ' position="' + (CANVAS_SIZE / 2) + ' ' + (CANVAS_SIZE / 2) * -1 +  ' ' + '-0.5' + ' color="white" transparent="true" opacity=1></a-box>';
-    str += '<a-box static-body width= ' + CANVAS_SIZE + ' height=50 ' + 'depth=' + CANVAS_SIZE + ' position="' + (CANVAS_SIZE / 2) + ' -25 ' + (CANVAS_SIZE / 2) + ' color="white" ></a-box>';
+    str += '<a-box static-body width= ' + CANVAS_SIZE + ' height=50 ' + 'depth=' + CANVAS_SIZE + ' position="' + (CANVAS_SIZE / 2) + ' -25 ' + (CANVAS_SIZE / 2) + '" color="white" ></a-box>';
+    // str += '<a-box static-body id="futa"  material="transparent:true;" width= ' + CANVAS_SIZE + ' height=2 ' + 'depth=' + CANVAS_SIZE + ' position="' + (CANVAS_SIZE / 2) + ' 7 ' + (CANVAS_SIZE / 2) + '" ></a-box>';
+    str += '<a-entity static-body geometry="primitive: box;" material="color: red;transparent:true;" width= ' + CANVAS_SIZE + ' height=2 ' + 'depth=' + CANVAS_SIZE + ' position="' + (CANVAS_SIZE / 2) + ' 7 ' + (CANVAS_SIZE / 2) + '"></a-entity>'
+    // str += '<a-box static-body id="futa"  material="" width= ' + CANVAS_SIZE + ' height=2 ' + 'depth=' + CANVAS_SIZE + ' position="' + (CANVAS_SIZE / 2) + ' 7 ' + (CANVAS_SIZE / 2) + '" ></a-box>';
     for (var i = 0; i < parts_list.length; i++) {
         var parts = parts_list[i];
         if (parts.type === 'wall') {
-            // str += '<a-box static-body id="box' + i + '" cursor-listener width= ' + parts.width + ' height=' + parts.height + ' depth=' + parts_depth + ' ' + ' position="' + (parts.x + parts.width / 2) + ' ' + (parts.y + parts.height / 2) * -1 + ' ' + (parts_depth / 2) + '" color="blue"></a-box>';
-            str += '<a-box static-body id="box' + i + '" cursor-listener width= ' + parts.width + ' height="8"' + ' depth=' + parts.height + ' position="' + (parts.x + parts.width / 2) + ' 2 ' + (parts.y + parts.height / 2) + '" color="#1B1B1B"></a-box>';
+            str += '<a-box static-body id="box' + i + '" cursor-listener width= ' + parts.width + ' height="8"' + ' depth=' + parts.height + ' position="' + (parts.x + parts.width / 2) + ' 2 ' + (parts.y + parts.height / 2) + '" color="#1B1B1B" ></a-box>';
         }
     }
     // str += '</a-entity>'
