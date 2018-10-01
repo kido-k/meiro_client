@@ -30,7 +30,7 @@ var bord_rotation = { x: 0, y: 0, z: 0 }
 
 var player_pass = [];
 var player_num = 0;
-var player_start_position = { x: -95, y: 15, z: -85 };
+var player_start_position = { x: -95, y: 5, z: -85 };
 var player_size = 3;
 var parts_depth = 5;
 var first_play = true;
@@ -1008,7 +1008,7 @@ function displaySVG(parts_list) {
 function displayAFRAME(parts_list) {
     $('#vr_meiro').empty();
     var str = "";
-    str += '<a-scene id="a_meiro" embedded physics="debug: true;friction: 0.1;gravity:-19.62; restitution: 0.01; iterations:5">';
+    str += '<a-scene id="a_meiro" embedded physics="debug: true;friction: 0.1;gravity:-49.05; restitution: 0.01; iterations:5; maxInterval:0.1">';
     str += '<a-entity light="color: #FFF; intensity: 1.5" position="' + light_position.x + ' ' + light_position.y + ' ' + light_position.z + '"></a-entity>';
     str += '<a-entity id="a_camera" position="' + camera_position.x + ' ' + camera_position.y + ' ' + camera_position.z + '" rotation="' + camera_rotation.x + ' ' + camera_rotation.y + ' ' + camera_rotation.z + '">';
     str += '<a-camera><a-cursor></a-cursor></a-camera>';
@@ -1016,10 +1016,9 @@ function displayAFRAME(parts_list) {
     str += '<a-entity id="a_board" rotation="' + bord_rotation.x + ' ' + bord_rotation.y + ' ' + bord_rotation.z + '">';
     str += '<a-sky color="#DDDDDD"></a-sky>';
     str += '<a-entity id="a_board" position="' + bord_position.x + ' ' + bord_position.y + ' ' + bord_position.z + ' ' + '" rotation="' + bord_rotation.x + ' ' + bord_rotation.y + ' ' + bord_rotation.z + '">';
-    str += '<a-box static-body width= ' + CANVAS_SIZE + ' height=50 ' + 'depth=' + CANVAS_SIZE + ' position="' + (CANVAS_SIZE / 2) + ' -25 ' + (CANVAS_SIZE / 2) + '" color="white" ></a-box>';
+    str += '<a-box static-body width=' + CANVAS_SIZE + ' height=50 ' + 'depth=' + CANVAS_SIZE + ' position="' + (CANVAS_SIZE / 2) + ' -25 ' + (CANVAS_SIZE / 2) + '" color="white" ></a-box>';
     // str += '<a-box static-body id="futa"  material="transparent:true;" width= ' + CANVAS_SIZE + ' height=2 ' + 'depth=' + CANVAS_SIZE + ' position="' + (CANVAS_SIZE / 2) + ' 7 ' + (CANVAS_SIZE / 2) + '" ></a-box>';
-    str += '<a-entity static-body geometry="primitive: box;" material="color: red;transparent:true;" width= ' + CANVAS_SIZE + ' height=2 ' + 'depth=' + CANVAS_SIZE + ' position="' + (CANVAS_SIZE / 2) + ' 7 ' + (CANVAS_SIZE / 2) + '"></a-entity>'
-    // str += '<a-box static-body id="futa"  material="" width= ' + CANVAS_SIZE + ' height=2 ' + 'depth=' + CANVAS_SIZE + ' position="' + (CANVAS_SIZE / 2) + ' 7 ' + (CANVAS_SIZE / 2) + '" ></a-box>';
+    str += '<a-entity id="futa" static-body geometry="primitive:box; width:' + CANVAS_SIZE + '; height:7; ' + 'depth:' + CANVAS_SIZE + '; " material="transparent:true; visible:false;" position="' + (CANVAS_SIZE / 2) + ' 15 ' + (CANVAS_SIZE / 2) + '"></a-entity>'
     for (var i = 0; i < parts_list.length; i++) {
         var parts = parts_list[i];
         if (parts.type === 'wall') {
