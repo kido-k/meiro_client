@@ -1,6 +1,6 @@
 
 
-const EXECUTION_INTERVAL = 50;
+const EXECUTION_INTERVAL = 100;
 const CANVAS_SIZE = 200;
 const BORD_SIZE = 1000;
 const THRESHHOLD = 150;
@@ -15,28 +15,18 @@ const PLAYER_SPEED = 1;
 const SOCKET_CONNECT = 'https://gentle-dusk-86476.herokuapp.com/';
 const SYNCHTIME = 300;
 
-var image;
-var map = [];
-var size = 0;
-var position = {};
-var start = [];
-var end = [];
-var players = [];
-var wall_width = 0;
-// var camera_position = { x: 500, y: 25, z: 20 };
+// var camera_position = { x: 500, y: 800, z: 500 }
+// var camera_rotation = { x: -90, y: -180, z: 0 }
+
 var camera_position = { x: 500, y: 40, z: 70 };
 var camera_rotation = { x: 0, y: -180, z: 0 };
 var light_position = { x: 500, y: 300, z: 0 };
 var bord_position = { x: -100, y: 0, z: -100 };
 var bord_rotation = { x: 0, y: 0, z: 0 };
 
-var player_pass = [];
-var player_num = 0;
-var player_start_position = { x: -95, y: 15, z: -85 };
-var player_size = 3;
-var parts_depth = 5;
-var first_play = true;
-const goal = { x: CANVAS_SIZE * 0.99 }
+var velocity = 100;
+var direction = 90;
+var omega = 0;
 
 var socket;
 var mobile_acc = { x: 0, y: 0, z: 0 };
@@ -50,17 +40,8 @@ $(function () {
     });
 
     $('#test').on('click', function () {
-        var dragon = document.querySelector('#obj').body;
-        // サイコロが力の影響を（再び）受けるように設定する
-        dragon.wakeUp();
-        //    dragon.position = new CANNON.Vec3(500, 60, 60);
-        dragon.velocity.set(0, 0, 100);
-        //    dragon.applyImpulse(
-        //        new CANNON.Vec3(Math.random() * 20, Math.random() * 20, Math.random() * 20), // 与えるベクトル
-        //        new CANNON.Vec3(0.5, Math.random() * 10, Math.random() * 10) // 力を与える点
-        //    );
+        accelDragon();
     });
-
 
     $('.a_move').on('click', function () {
         const btn = this.id;
@@ -99,30 +80,57 @@ function createPlayer() {
     addAframeElement();
 }
 
-
-
 function moveAframePlayer() {
 }
 
 function addAframeElement() {
     var str = '<a-entity id="obj" ';
+    str += 'pos-tracer="target: a_camera" ';
     str += 'dynamic-body="mass:100;linearDamping: 0.01;angularDamping: 0.0001;"';
-    str += 'geometry="primitive:box; width:50; height:30; depth:100;" ';
+    str += 'geometry="primitive:box; width:50; height:50; depth:50;" ';
     str += 'material="color:red; transparent:true; visible:false;"';
-    str += 'position="500 15 50">';
+    str += 'position="940 25 50">';
     str += '<a-obj-model id="dragon" src="img/BlueEyes/BlueEyes.obj" mtl="img/BlueEyes/BlueEyes.mtl"></a-obj-model>';
     // str += '<a-obj-model id="dragon" position="500 0 0" src="img/BlueEyes/BlueEyes.obj" mtl="img/BlueEyes/BlueEyes.mtl"></a-obj-model>';
     str += '</a-entity>';
     $('#a_cource').append(str);
     run();
+    syncCamera();
+    // fireAction();
 }
 
 function roteBordMobile(accel) {
     displayData(accel);
-    if (accel.x < 70 && accel.x > -70 && accel.y < 70 && accel.y > -70) {
-        $('#a_board').attr('rotation', accel.x * 0.4 + ' ' + 0 + ' ' + -accel.y * 0.4);
+    $('#obj').attr('rotation', 0 + ' ' + 0 + ' ' + accel.x * 0.33);
+    if (-90 <= accel.x && accel.x < -70) {
+        omega = -10;
+    } else if (-70 <= accel.x && accel.x < -10) {
+        omega = -5
+    } else if (-10 <= accel.x && accel.x < 10) {
+        omega = 0;
+    } else if (10 <= accel.x && accel.x < 70) {
+        omega = 5;
+    } else if (70 <= accel.x && accel.x < 90) {
+        omega = 10;
+    } else {
+
     }
 };
+
+function accelDragon() {
+    var dragon = document.querySelector('#obj').body;
+    dragon.wakeUp();
+    direction = direction + omega;
+    var x_vel = velocity * Math.cos(direction / 180 * Math.PI);
+    var z_vel = velocity * Math.sin(direction / 180 * Math.PI);
+    dragon.velocity.set(x_vel, 0, z_vel);
+    dragon.angularVelocity.set(0, (-0.171 * omega), 0);
+    // $('#obj').attr('rotation', 0 + ' ' + direction + ' ' + 0);
+    // var txt = document.getElementById("txt");   // データを表示するdiv要素の取得
+    // txt.innerHTML = "direction: " + Math.floor(direction);
+
+    setTimeout(accelDragon, EXECUTION_INTERVAL);
+}
 
 
 // データを表示する displayData 関数
@@ -130,7 +138,8 @@ function displayData(accel) {
     var txt = document.getElementById("txt");   // データを表示するdiv要素の取得
     txt.innerHTML = "alpha: " + Math.floor(accel.z) + "<br>"  // x軸の値
         + "beta:  " + Math.floor(accel.x) + "<br>"  // y軸の値
-        + "gamma: " + Math.floor(accel.y);          // z軸の値
+        + "gamma: " + Math.floor(accel.y) + "<br>"  // z軸の値
+        + "direction: " + Math.floor(direction);
 }
 
 function displayAFRAME(parts_list) {
@@ -141,26 +150,117 @@ function displayAFRAME(parts_list) {
     str += '<a-entity id="a_camera" position="' + camera_position.x + ' ' + camera_position.y + ' ' + camera_position.z + '" rotation="' + camera_rotation.x + ' ' + camera_rotation.y + ' ' + camera_rotation.z + '">';
     str += '<a-camera><a-cursor></a-cursor></a-camera>';
     str += '</a-entity>';
-    str += '<a-sky color="#DDDDDD"></a-sky>';
-    str += '<a-box static-body width= ' + BORD_SIZE + ' height=50 ' + 'depth=' + BORD_SIZE + ' position="' + (BORD_SIZE / 2) + ' -25 ' + (BORD_SIZE / 2) + ' color="white" ></a-box>';
-    // for (var i = 0; i < parts_list.length; i++) {
-    //     var parts = parts_list[i];
-    //     if (parts.type === 'wall') {
-    //         str += '<a-box static-body id="box' + i + '" cursor-listener width= ' + parts.width + ' height="8"' + ' depth=' + parts.height + ' position="' + (parts.x + parts.width / 2) + ' 2 ' + (parts.y + parts.height / 2) + '" color="#1B1B1B"></a-box>';
-    //     }
-    // }
+    str += '<a-sky cursor-listener color="#DDDDDD"></a-sky>';
+    //地面
+    str += '<a-box cursor-listener static-body width= ' + BORD_SIZE + ' height=50 ' + 'depth=' + BORD_SIZE + ' position="' + (BORD_SIZE / 2) + ' -25 ' + (BORD_SIZE / 2) + ' color="white" ></a-box>';
+    //外壁
+    str += '<a-box cursor-listener static-body width=20 height=100 ' + 'depth=' + BORD_SIZE + ' position="' + 10 + ' 50 ' + (BORD_SIZE / 2) + ' color="silver" ></a-box>';
+    str += '<a-box cursor-listener static-body width=20 height=100 ' + 'depth=' + BORD_SIZE + ' position="' + (BORD_SIZE - 10) + ' 50 ' + (BORD_SIZE / 2) + ' color="silver" ></a-box>';
+    str += '<a-box cursor-listener static-body width=' + (BORD_SIZE - 100) + ' height=100 ' + 'depth=20 position="' + ((BORD_SIZE / 2) + 50) + ' 50 ' + BORD_SIZE + ' color="silver" ></a-box>';
+    str += '<a-box cursor-listener static-body width=' + (BORD_SIZE - 100) + ' height=100 ' + 'depth=20 position="' + ((BORD_SIZE / 2) - 50) + ' 50 ' + 10 + ' color="silver" ></a-box>';
+    //内装
+    //z-200    
+    str += '<a-box cursor-listener static-body width=' + 240 + ' height=100 ' + 'depth=40 position="' + 140 + ' 50 ' + 200 + ' color="silver" ></a-box>';
+    str += '<a-box cursor-listener static-body width=' + 260 + ' height=100 ' + 'depth=40 position="' + 480 + ' 50 ' + 200 + ' color="silver" ></a-box>';
+    str += '<a-box cursor-listener static-body width=' + 280 + ' height=100 ' + 'depth=40 position="' + 840 + ' 50 ' + 200 + ' color="silver" ></a-box>';
+    //z-400    
+    str += '<a-box cursor-listener static-body width=' + 240 + ' height=100 ' + 'depth=40 position="' + 140 + ' 50 ' + 400 + ' color="silver" ></a-box>';
+    str += '<a-box cursor-listener static-body width=' + 260 + ' height=100 ' + 'depth=40 position="' + 480 + ' 50 ' + 400 + ' color="silver" ></a-box>';
+    str += '<a-box cursor-listener static-body width=' + 280 + ' height=100 ' + 'depth=40 position="' + 840 + ' 50 ' + 400 + ' color="silver" ></a-box>';
+    //z-600
+    str += '<a-box cursor-listener static-body width=' + 240 + ' height=100 ' + 'depth=40 position="' + 140 + ' 50 ' + 600 + ' color="silver" ></a-box>';
+    str += '<a-box cursor-listener static-body width=' + 260 + ' height=100 ' + 'depth=40 position="' + 480 + ' 50 ' + 600 + ' color="silver" ></a-box>';
+    str += '<a-box cursor-listener static-body width=' + 280 + ' height=100 ' + 'depth=40 position="' + 840 + ' 50 ' + 600 + ' color="silver" ></a-box>';
+    //z-800
+    str += '<a-box cursor-listener static-body width=' + 240 + ' height=100 ' + 'depth=40 position="' + 140 + ' 50 ' + 800 + ' color="silver" ></a-box>';
+    str += '<a-box cursor-listener static-body width=' + 260 + ' height=100 ' + 'depth=40 position="' + 480 + ' 50 ' + 800 + ' color="silver" ></a-box>';
+    str += '<a-box cursor-listener static-body width=' + 280 + ' height=100 ' + 'depth=40 position="' + 840 + ' 50 ' + 800 + ' color="silver" ></a-box>';
+
     str += '</a-entity>'
     str += '</a-scene>';
     $('#vr_cource').append(str);
 }
 
+function syncCamera() {
+    AFRAME.registerComponent('pos-tracer', {
+        init: function () {
+            this.targetEl = document.getElementById(this.data.target);
+        },
+        tick: function () {
+            const radToDeg = 180 / Math.PI;
+
+            var x_rote = this.el.object3D.rotation.x * radToDeg
+            var y_rote = this.el.object3D.rotation.y * radToDeg
+            var z_rote = this.el.object3D.rotation.z * radToDeg
+
+            if (x_rote <= 90) {
+                var y = y_rote + 180;
+            } else {
+                var y = y_rote * (-1);
+            }
+
+            var rot = AFRAME.utils.coordinates.stringify({
+                x: 0,
+                y: y,
+                z: 0
+            });
+
+            var pos = AFRAME.utils.coordinates.stringify({
+                x: this.el.object3D.position.x + 20 * (-1 * Math.sin(y / radToDeg)),
+                y: this.el.object3D.position.y + 25,
+                z: this.el.object3D.position.z + 20 * (-1 * Math.cos(y / radToDeg))
+            });
+
+            this.targetEl.setAttribute("position", pos);
+            this.targetEl.setAttribute("rotation", rot);
+        }
+    });
+}
+
+function fireAction() {
+    AFRAME.registerComponent('cursor-listener', {
+        init: function () {
+            this.el.addEventListener("click", function (evt) {
+                addFireBallElement();
+            });
+        }
+    });
+}
+
+
+function addFireBallElement() {
+    var str = '<a-entity id="fire" ';
+    str += 'dynamic-body="mass:10;linearDamping: 0.01;angularDamping: 0.0001;"';
+    str += 'geometry="primitive:sphere; radius:5;" ';
+    str += 'material="color:orange; transparent:true; visible:true;"';
+    str += 'position="50 25 150">';
+    // str += '<a-obj-model position="500 15 50" src="img/FireGem/Fire Gem.obj" mtl="img/FireGem/Fire Gem.mtl"></a-obj-model>';
+    str += '</a-entity>';
+    $('#a_cource').append(str);
+    // canon();
+}
+
+
 function run() {
     if (document.getElementById("dragon").object3D.children[0]) {
         document.getElementById("dragon").object3D.children[0].children[0].material[1].transparent = true;
     } else {
-        setTimeout(run, 500);
+        setTimeout(run, EXECUTION_INTERVAL);
     }
 }
+
+// function canon() {
+//     if (document.querySelector('#fire').body) {
+//         var fire = document.querySelector('#fire').body;
+//         fire.wakeUp();
+//         //    dragon.position = new CANNON.Vec3(500, 60, 60);
+//         fire.velocity.set(0, 0, 500);
+
+//     } else {
+//         setTimeout(canon, 500);
+//     }
+// }
+
 
 function moveCamera_btn(btn) {
     switch (btn) {
@@ -211,26 +311,26 @@ function moveCamera_btn(btn) {
 
 function roteBord(btn) {
     switch (btn) {
-        case 'b_up':
-            bord_rotation.x -= BORD_ROTE_UNIT;
-            break;
+        // case 'b_up':
+        //     bord_rotation.x -= BORD_ROTE_UNIT;
+        //     break;
         case 'b_left':
-            bord_rotation.z += BORD_ROTE_UNIT;
+            omega -= 5;
             break;
         case 'b_right':
-            bord_rotation.z -= BORD_ROTE_UNIT;
+            omega += 5;
             break;
-        case 'b_down':
-            bord_rotation.x += BORD_ROTE_UNIT;
-            break;
-        case 'b_minus':
-            bord_rotation.y -= BORD_ROTE_UNIT;
-            break;
-        case 'b_plus':
-            bord_rotation.y += BORD_ROTE_UNIT;
-            break;
-        default:
-            console.log('error btn= ' + btn);
+        // case 'b_down':
+        //     bord_rotation.x += BORD_ROTE_UNIT;
+        //     break;
+        // case 'b_minus':
+        //     bord_rotation.y -= BORD_ROTE_UNIT;
+        //     break;
+        // case 'b_plus':
+        //     bord_rotation.y += BORD_ROTE_UNIT;
+        //     break;
+        // default:
+        //     console.log('error btn= ' + btn);
     }
-    $('#a_board').attr('rotation', bord_rotation.x + ' ' + bord_rotation.y + ' ' + bord_rotation.z);
+    // $('#a_board').attr('rotation', bord_rotation.x + ' ' + bord_rotation.y + ' ' + bord_rotation.z);
 };
