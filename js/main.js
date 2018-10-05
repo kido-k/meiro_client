@@ -7,9 +7,10 @@ const PLAYSER_SIZE_HOSEI = 1;
 const CHECK_DISTANCE = 3;
 const MAGNIFICATION = 3;
 const CANVAS_SMALL_LIMIT = CANVAS_SIZE / 100 * 2
-const CAMERA_MOVE_UNIT = 5;
+const CAMERA_MOVE_UNIT = 1;
 const PLAYER_MOVE_UNIT = 5;
 const PLAYER_SPEED = 1;
+const CAMERA_ROTE_UNIT = 90;
 
 var image;
 // var player = {};
@@ -20,8 +21,11 @@ var start = [];
 var end = [];
 var players = [];
 var wall_width = 0;
+var light = true;
 var camera_position = { x: 100, y: 150, z: 100 }
 var camera_rotation = { x: -90, y: 0, z: 0 }
+var light_position = { x: 75, y: 150, z: 0 };
+
 var player_pass = [];
 var first_play = true;
 var player_num = 0;
@@ -45,7 +49,8 @@ $(function () {
         finish = false;
         auto = false;
         createMeiro();
-        createPlayer();
+        setCameraPosition();
+        setInterval(autoChangeLight, 300);
         $('#show').click();
     });
 
@@ -73,7 +78,7 @@ $(function () {
 
     $('.p_move').on('click', function () {
         const btn = this.id;
-        player = moveP_btn(btn);
+        player = moveCharactor(btn);
     });
 
     $('html').keyup(function (e) {
@@ -123,7 +128,12 @@ $(function () {
 
     $('#auto').on('click', function () {
         auto = true;
+        createPlayer();
         searchGoal();
+    });
+
+    $('#switch').on('click', function () {
+        changeLight();
     });
 
     $('#download').on('click', function () {
@@ -172,6 +182,12 @@ function createPlayer() {
     // $("#player0").velocity.set(0, 0, -4);
 }
 
+function setCameraPosition() {
+    camera_position = { x: 3, y: 3, z: 16 }
+    camera_rotation = { x: 0, y: -90, z: 0 }
+    $('#a_camera').attr('position', camera_position.x + ' ' + camera_position.y + ' ' + camera_position.z);
+    $('#a_camera').attr('rotation', camera_rotation.x + ' ' + camera_rotation.y + ' ' + camera_rotation.z);
+}
 
 
 function moveAframePlayer() {
@@ -384,6 +400,41 @@ function addAframeElement(id, x, y, radius, color) {
     $('#a_meiro').append(str);
 }
 
+function moveCharactor(btn) {
+    var dir = Math.abs(camera_rotation.y / 90);
+    switch (btn) {
+        case 'p_foward':
+            // var camera_rotation = { x: -90, y: 0, z: 0 
+            if (dir === 0 || dir === 4) {
+                camera_position.z -= CAMERA_MOVE_UNIT;
+            } else if (dir === 1) {
+                camera_position.x += CAMERA_MOVE_UNIT;
+            } else if (dir === 2) {
+                camera_position.z += CAMERA_MOVE_UNIT;
+            } else if (dir === 3) {
+                camera_position.x -= CAMERA_MOVE_UNIT;
+            } else {
+                console.log("error");
+            }
+            $('#a_camera').attr('position', camera_position.x + ' ' + camera_position.y + ' ' + camera_position.z);
+            break;
+        case 'p_right':
+            camera_rotation.y -= CAMERA_ROTE_UNIT;
+            $('#a_camera').attr('rotation', camera_rotation.x + ' ' + camera_rotation.y + ' ' + camera_rotation.z);
+            break;
+        case 'p_left':
+            camera_rotation.y += CAMERA_ROTE_UNIT;
+            $('#a_camera').attr('rotation', camera_rotation.x + ' ' + camera_rotation.y + ' ' + camera_rotation.z);
+            break;
+        case 'p_back':
+            camera_rotation.y += CAMERA_ROTE_UNIT * 2;
+            $('#a_camera').attr('rotation', camera_rotation.x + ' ' + camera_rotation.y + ' ' + camera_rotation.z);
+            break;
+        default:
+            console.log('error btn= ' + btn);
+    }
+};
+
 function moveCamera_btn(btn) {
     switch (btn) {
         case 'a_up':
@@ -411,19 +462,19 @@ function moveCamera_btn(btn) {
             $('#a_camera').attr('position', camera_position.x + ' ' + camera_position.y + ' ' + camera_position.z);
             break;
         case 'a_drote':
-            camera_rotation.x -= CAMERA_MOVE_UNIT;
+            camera_rotation.x -= CAMERA_ROTE_UNIT;
             $('#a_camera').attr('rotation', camera_rotation.x + ' ' + camera_rotation.y + ' ' + camera_rotation.z);
             break;
         case 'a_urote':
-            camera_rotation.x += CAMERA_MOVE_UNIT;
+            camera_rotation.x += CAMERA_ROTE_UNIT;
             $('#a_camera').attr('rotation', camera_rotation.x + ' ' + camera_rotation.y + ' ' + camera_rotation.z);
             break;
         case 'a_rrote':
-            camera_rotation.y -= CAMERA_MOVE_UNIT;
+            camera_rotation.y -= CAMERA_ROTE_UNIT;
             $('#a_camera').attr('rotation', camera_rotation.x + ' ' + camera_rotation.y + ' ' + camera_rotation.z);
             break;
         case 'a_lrote':
-            camera_rotation.y += CAMERA_MOVE_UNIT;
+            camera_rotation.y += CAMERA_ROTE_UNIT;
             $('#a_camera').attr('rotation', camera_rotation.x + ' ' + camera_rotation.y + ' ' + camera_rotation.z);
             break;
         default:
@@ -464,6 +515,29 @@ function setInitial() {
     $('#st_msg').css({ display: 'inline' });
     $('#show').css({ display: 'inline' });
     $('#vr_meiro').empty();
+}
+
+function changeLight() {
+    if (light) {
+        light_position.y = -500;
+        $('#light').attr('position', light_position.x + ' ' + light_position.y + ' ' + light_position.z);
+        light = false;
+    } else {
+        light_position.y = 150;
+        $('#light').attr('position', light_position.x + ' ' + light_position.y + ' ' + light_position.z);
+        light = true;
+    }
+}
+
+var autoChangeLight = function () {
+    var ramdom = Math.floor(Math.random() * 2);
+    if (ramdom === 0) {
+        light_position.y = -500;
+        $('#light').attr('position', light_position.x + ' ' + light_position.y + ' ' + light_position.z);
+    } else {
+        light_position.y = 150;
+        $('#light').attr('position', light_position.x + ' ' + light_position.y + ' ' + light_position.z);
+    }
 }
 
 function displayBtn(display) {
@@ -1106,18 +1180,18 @@ function displayAFRAME(parts_list) {
     $('#vr_meiro').empty();
     var str = "";
     str += '<a-scene id="a_meiro" embedded>';
-    str += '<a-sky color="#DDDDDD"></a-sky>';
-    str += '<a-box width= ' + CANVAS_SIZE + ' height=2 ' + 'depth=' + CANVAS_SIZE + ' position="' + (CANVAS_SIZE / 2) + ' 0 ' + (CANVAS_SIZE / 2) + ' color="white" ></a-box>';
-    str += '<a-entity id="a_camera" position="' + camera_position.x + ' ' + camera_position.y + ' ' + camera_position.z + '" rotation="' + camera_rotation.x + ' ' + camera_rotation.y + ' ' + camera_rotation.z + '">';
+    str += '<a-sky color="#000000"></a-sky>';
+    str += '<a-box static-body width= ' + CANVAS_SIZE + ' height=2 ' + 'depth=' + CANVAS_SIZE + ' position="' + (CANVAS_SIZE / 2) + ' 0 ' + (CANVAS_SIZE / 2) + ' color="white" ></a-box static-body>';
+    str += '<a-entity id="a_camera" static-body position="' + camera_position.x + ' ' + camera_position.y + ' ' + camera_position.z + '" rotation="' + camera_rotation.x + ' ' + camera_rotation.y + ' ' + camera_rotation.z + '">';
     str += '<a-camera><a-cursor></a-cursor></a-camera>';
     str += '</a-entity>';
-    // str += '<a-obj-model id="dragon" position="0 30 0" src="img/BlueEyes/BlueEyes.obj" mtl="img/BlueEyes/BlueEyes.mtl"></a-obj-model>';
-    str += '<a-entity light="color: #FFF; intensity: 1.5" position="75 150 0"></a-entity>';
+    str += '<a-entity id="light" light="color: #ff0000; intensity: 0.5;decay:1.0; distance:0; type:ambient;" position="' + light_position.x + ' ' + light_position.y + ' ' + light_position.z + '"></a-entity>';
+    str += '<a-obj-model id="zombie" position="0 -10 20" src="img/Zombie/Zombie_1.obj" mtl="img/Zombie/Zombie_1.mtl"></a-obj-model>';
 
     for (var i = 0; i < parts_list.length; i++) {
         var parts = parts_list[i];
         if (parts.type === 'wall') {
-            str += '<a-box id="box' + i + '" cursor-listener width= ' + parts.width + ' height="8"' + ' depth=' + parts.height + ' position="' + (parts.x + parts.width / 2) + ' 2 ' + (parts.y + parts.height / 2) + '" color="blue"></a-box>';
+            str += '<a-box static-body id="box' + i + '" cursor-listener width= ' + parts.width + ' height="10"' + ' depth=' + parts.height + ' position="' + (parts.x + parts.width / 2) + ' 2 ' + (parts.y + parts.height / 2) + '" color="gray"></a-box static-body>';
         }
     }
     // str += '<a-sphere id="sphere" color="#C0C0C0" radius="3" position="13 2 16" ></a-sphere>';
