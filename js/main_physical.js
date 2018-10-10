@@ -27,6 +27,10 @@ var camera_rotation = { x: -90, y: 0, z: 0 }
 var light_position = { x: 100, y: 300, z: 100 }
 var bord_position = { x: -100, y: 0, z: -100 }
 var bord_rotation = { x: 0, y: 0, z: 0 }
+// var camera_position = { x: -20, y: 200, z: 0 }
+// var camera_rotation = { x: -90, y: 0, z: 0 }
+// var phone_position = { x: -200, y: 0, z: -50 }
+// var phone_rotation = { x: 0, y: 0, z: 180 }
 
 var player_pass = [];
 var player_num = 0;
@@ -355,9 +359,9 @@ function addAframeElement(id, x, y, z, radius, color) {
     str += 'position="' + x + ' ' + y + ' ' + z + '"';
     str += '></a-entity>';
     str += ' </a-entity>';
-    str += '<a-obj-model static-body id="dragon" position="0 30 0" src="img/BlueEyes/BlueEyes.obj" mtl="img/BlueEyes/BlueEyes.mtl"></a-obj-model>';
+    // str += '<a-obj-model static-body id="dragon" position="0 30 0" src="img/BlueEyes/BlueEyes.obj" mtl="img/BlueEyes/BlueEyes.mtl"></a-obj-model>';
     $('#a_meiro').append(str);
-    run();
+    // run();
 }
 
 function makeLoad(size) {
@@ -547,6 +551,9 @@ function roteBordMobile(accel) {
     if (accel.x < 70 && accel.x > -70 && accel.y < 70 && accel.y > -70) {
         $('#a_board').attr('rotation', accel.x * 0.4 + ' ' + 0 + ' ' + -accel.y * 0.4);
     }
+    // if (accel.x < 70 && accel.x > -70 && accel.y < 70 && accel.y > -70) {
+    //     $('#a_smaho').attr('rotation', accel.x * 0.6 + ' ' + 0 + ' ' + (-180 - (accel.y * 0.6)));
+    // }
 };
 
 
@@ -1013,9 +1020,11 @@ function displayAFRAME(parts_list) {
     str += '<a-entity id="a_camera" position="' + camera_position.x + ' ' + camera_position.y + ' ' + camera_position.z + '" rotation="' + camera_rotation.x + ' ' + camera_rotation.y + ' ' + camera_rotation.z + '">';
     str += '<a-camera><a-cursor></a-cursor></a-camera>';
     str += '</a-entity>';
+    // str += '<a-obj-model id="a_smaho" scale="2 2 2" position="' + phone_position.x + ' ' + phone_position.y + ' ' + phone_position.z + '" rotation="' + phone_rotation.x + ' ' + phone_rotation.y + ' ' + phone_rotation.z + '" src="img/smaho/smart_phone.obj" mtl="img/smaho/smart_phone.mtl"></a-obj-model>';
     str += '<a-entity id="a_board" rotation="' + bord_rotation.x + ' ' + bord_rotation.y + ' ' + bord_rotation.z + '">';
     str += '<a-sky color="#DDDDDD"></a-sky>';
     str += '<a-entity id="a_board" position="' + bord_position.x + ' ' + bord_position.y + ' ' + bord_position.z + ' ' + '" rotation="' + bord_rotation.x + ' ' + bord_rotation.y + ' ' + bord_rotation.z + '">';
+    // str += '<a-gltf-model id="a_smaho" src="img/smart_phone.glb" position="' + phone_position.x + ' ' + phone_position.y + ' ' + phone_position.z + ' ' + '" rotation="' + phone_rotation.x + ' ' + phone_rotation.y + ' ' + phone_rotation.z + '"></a-gltf-model>';
     str += '<a-box static-body width=' + CANVAS_SIZE + ' height=50 ' + 'depth=' + CANVAS_SIZE + ' position="' + (CANVAS_SIZE / 2) + ' -25 ' + (CANVAS_SIZE / 2) + '" color="white" ></a-box>';
     // str += '<a-box static-body id="futa"  material="transparent:true;" width= ' + CANVAS_SIZE + ' height=2 ' + 'depth=' + CANVAS_SIZE + ' position="' + (CANVAS_SIZE / 2) + ' 7 ' + (CANVAS_SIZE / 2) + '" ></a-box>';
     str += '<a-entity id="futa" static-body geometry="primitive:box; width:' + CANVAS_SIZE + '; height:7; ' + 'depth:' + CANVAS_SIZE + '; " material="transparent:true; visible:false;" position="' + (CANVAS_SIZE / 2) + ' 15 ' + (CANVAS_SIZE / 2) + '"></a-entity>'
